@@ -10,16 +10,23 @@ function showSection(id) {
 
 // --- Books ---
 
-async function loadBooks(query = "") {
-  const url = query ? `${API}/books/?q=${encodeURIComponent(query)}` : `${API}/books/`;
+async function loadBooks(query = "", type = "all") {
+  let url = `${API}/books/`;
+
+  if (query) { 
+    url += `?q=${encodeURIComponent(query)}&type=${type}`;
+  }
+
   const res = await fetch(url);
   const books = await res.json();
+
   const list = document.getElementById("book-list");
   list.innerHTML = books.map(b => `
-    <div class="book-card">
+    <div class="book-card" data-id="${b.id}">
       <div>
         <strong>${b.title}</strong> by ${b.author}<br/>
-        $${b.price.toFixed(2)} &mdash; ${b.stock_quantity} in stock
+        Category: ${b.category}<br/>
+        $${b.price.toFixed(2)} - ${b.stock_quantity} in stock
       </div>
       <button onclick="addToCart(${b.id})">Add to Cart</button>
     </div>
@@ -28,7 +35,9 @@ async function loadBooks(query = "") {
 
 function searchBooks() {
   const q = document.getElementById("search-input").value;
-  loadBooks(q);
+  const type = document.getElementById("search-type")?.value || "all";
+
+  loadBooks (q, type);
 }
 
 // --- Cart ---
@@ -51,16 +60,38 @@ async function loadCart() {
 }
 
 async function addToCart(bookId) {
-  if (!token) { alert("Please log in first."); showSection("login"); return; }
+  if (!token) { 
+    alert("Please log in first."); 
+    showSection("login"); 
+    return; 
+  }
+
+  if (heldItems[bookId]) { 
+    alert("Item already reserved in cart.");
+    return;
+  }
+
+  heldItems[bookId] = Date.now();
+
+
   const res = await fetch(`${API}/store/cart`, {
     method: "POST",
     headers: { ...authHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify({ book_id: bookId, quantity: 1 }),
   });
+
   if (res.ok) {
-    const cart = await res.json();
-    document.getElementById("cart-count").textContent = cart.items.length;
-    alert("Added to cart!");
+    alert("Added to cart (inventory held for 5 minutes)");
+
+    loadBooks();
+    loadCart();  
+
+    setTimeout(() => {
+      delete heldItems[bookId];
+      console.log(`Hold expired for book ${bookId}`);
+      loadBooks();
+    }, HOLD_TIME);
+
   } else {
     const err = await res.json();
     alert(err.error || "Could not add to cart.");
