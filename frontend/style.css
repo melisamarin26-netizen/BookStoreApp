@@ -1,3 +1,16 @@
+:root {
+  --bg: #f7f5f0;
+  --text: #1f1f1f;
+  --muted: #6b6b6b;
+
+  --primary: #2f2a24;
+  --accent: #6b1f2b;
+  --highlight: #3d5a40;
+
+  --card: #ffffff; 
+  --border: #e6e0d6;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -5,9 +18,13 @@
 }
 
 body {
-  font-family: Arial, sans-serif;
-  background: #f5f5f5;
-  color: #333;
+  font-family: 'Poppins', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  margin: 0;
+}
+h1, h2, h3 {
+  font-family: 'Playfair Display', serif;
 }
 
 header {
